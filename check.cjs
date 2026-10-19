@@ -9,12 +9,13 @@ class Element {
   addEventListener(k,f){this.handlers[k]=f}
 }
 let pixels=0;
-const context={getImageData:()=>({value:pixels,data:[0,0,0,0]}),putImageData:d=>pixels=d.value,beginPath(){},arc(){},fill(){pixels++},stroke(){pixels++},moveTo(){},lineTo(){}};
+const strokeContext={clearRect(){},beginPath(){},arc(){},fill(){},stroke(){},moveTo(){},lineTo(){}};
+const context={getImageData:()=>({value:pixels,data:[0,0,0,0]}),putImageData:d=>pixels=d.value,drawImage(){pixels++},beginPath(){},arc(){},fill(){pixels++},stroke(){pixels++},moveTo(){},lineTo(){}};
 const elements=new Map();
 const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id)};
 Object.assign(get('canvas'),{getContext:()=>context,width:1024,height:1024,getBoundingClientRect:()=>({left:0,top:0,width:512,height:512}),setPointerCapture(){},hasPointerCapture:()=>false});
 Object.assign(get('viewport'),{clientWidth:544,clientHeight:800,scrollLeft:0,scrollTop:0});
-const sandbox={ResizeObserver:class {observe(){}},document:{getElementById:get,querySelectorAll:()=>[],createElement:()=>new Element(),addEventListener(){}},setTimeout,URL,console};
+const sandbox={ResizeObserver:class {observe(){}},document:{getElementById:get,querySelectorAll:()=>[],createElement:tag=>tag==='canvas'?Object.assign(new Element(),{getContext:()=>strokeContext}):new Element(),addEventListener(){}},setTimeout,URL,console};
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync('dist/app.js','utf8'),sandbox);
 function run(s){return vm.runInContext(s,sandbox)}
@@ -69,6 +70,18 @@ run("setTool('pen')");c.handlers.pointerdown(event(70));assert.equal(run('active
 run("setTool('eraser')");c.handlers.pointerdown(event(71));assert.equal(run('active.size'),42);c.handlers.pointerup(event(71));
 console.log('PASS: scaled canvas coordinates and independent pen/eraser sizes');
 
+// Opacity is fixed for each pen stroke, composited once, and reset for erasing.
+get('penOpacity').oninput({target:{value:'35'}});
+run("setTool('pen')");c.handlers.pointerdown(event(80));
+assert.equal(run('active.opacity'),35);assert.equal(context.globalAlpha,1);
+get('penOpacity').oninput({target:{value:'0'}});
+assert.equal(run('active.opacity'),35);
+c.handlers.pointerup(event(80));
+c.handlers.pointerdown(event(81));assert.equal(run('active.opacity'),0);c.handlers.pointerup(event(81));
+run("setTool('eraser')");c.handlers.pointerdown(event(82));
+assert.equal(context.globalCompositeOperation,'destination-out');assert.equal(context.globalAlpha,1);
+c.handlers.pointerup(event(82));
+console.log('PASS: pen opacity capture, zero opacity and eraser alpha isolation');
 // Shadow and highlight saturation remain independent of the base color.
 run("selectColor(0,2); editBase('#c08040')");
 run('ramps[0].shadowSat=70; ramps[0].highlightSat=70; regenerate(0)');

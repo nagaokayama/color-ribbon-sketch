@@ -40,6 +40,11 @@ function regenerate(i) {
 stacks.forEach((_,i)=>regenerate(i));
 let selected = [0, 2], tool = 'pen', ink = stacks[0][2];
 const sizes = { pen: 16, eraser: 16 };
+let penOpacity=100;
+const strokeCanvas=document.createElement('canvas');
+strokeCanvas.width=strokeCanvas.height=1024;
+const strokeCtx=strokeCanvas.getContext('2d');
+$('penOpacity').oninput=e=>{penOpacity=+e.target.value;$('penOpacityValue').textContent=penOpacity+'%';};
 let active = null;
 const undo = [], redo = [];
 const viewport=$('viewport');
@@ -214,18 +219,27 @@ function sample(p) {
 
 }
 function draw(p, first = false) {
-  ctx.globalCompositeOperation = active.tool==='eraser'?'destination-out':'source-over';
-  ctx.fillStyle=active.ink; ctx.strokeStyle=active.ink; ctx.lineWidth=active.size; ctx.lineCap='round'; ctx.lineJoin='round';
-  ctx.beginPath();
-  if (first) {ctx.arc(p.x,p.y,active.size/2,0,Math.PI*2); ctx.fill();}
-  else {ctx.moveTo(active.last.x,active.last.y); ctx.lineTo(p.x,p.y); ctx.stroke();}
+  const target=active.tool==='pen'?strokeCtx:ctx;
+  target.globalCompositeOperation=active.tool==='eraser'?'destination-out':'source-over';
+  target.fillStyle=active.ink;target.strokeStyle=active.ink;target.lineWidth=active.size;target.lineCap='round';target.lineJoin='round';
+  target.beginPath();
+  if(first){target.arc(p.x,p.y,active.size/2,0,Math.PI*2);target.fill();}
+  else{target.moveTo(active.last.x,active.last.y);target.lineTo(p.x,p.y);target.stroke();}
+  if(active.tool==='pen'){
+    ctx.putImageData(active.before,0,0);
+    ctx.globalCompositeOperation='source-over';
+    ctx.globalAlpha=active.opacity/100;
+    ctx.drawImage(strokeCanvas,0,0);
+    ctx.globalAlpha=1;
+  }
   active.last=p;
 }
 canvas.addEventListener('pointerdown', e => {
   if (active !== null || e.button!==0) return;
   e.preventDefault(); const p=point(e);
   if (tool==='picker' || e.altKey) {sample(p);return;}
-  active={id:e.pointerId,before:snapshot(),last:p,tool,size:sizes[tool],ink};
+  active={id:e.pointerId,before:snapshot(),last:p,tool,size:sizes[tool],ink,opacity:penOpacity};
+  if(tool==='pen')strokeCtx.clearRect(0,0,1024,1024);
   canvas.setPointerCapture(e.pointerId); draw(p,true); historyButtons();
 });
 canvas.addEventListener('pointermove', e => {
