@@ -69,3 +69,49 @@ assert.equal(run('baseColors[3]'),run('baseColors[0]'));
 const duplicatedPalette=run('JSON.stringify(stacks[3])');
 run('regenerate(3)');assert.equal(run('JSON.stringify(stacks[3])'),duplicatedPalette);
 console.log('PASS: independent endpoint saturation, unchanged base and duplicated palette');
+
+// Round trips preserve all palette sources and generated colors, without touching ink history.
+const savedPalette=run('serializePalette()');
+const savedColors=run('JSON.stringify(stacks)');
+const historyBeforeLoad=run('JSON.stringify([undo,redo])');
+const pixelsBeforeLoad=pixels;
+run("editBase('#abcdef')");
+sandbox.paletteText=savedPalette;
+run('loadPalette(paletteText)');
+assert.equal(run('serializePalette()'),savedPalette);
+assert.equal(run('JSON.stringify(stacks)'),savedColors);
+assert.equal(run('JSON.stringify(selected)'),'[0,2]');
+assert.equal(pixels,pixelsBeforeLoad);
+assert.equal(run('JSON.stringify([undo,redo])'),historyBeforeLoad);
+for(const mutate of [
+  ()=>'{',
+  data=>{data.version=2;return JSON.stringify(data)},
+  data=>{data.sets=[];return JSON.stringify(data)},
+  data=>{data.sets[1].base='red';return JSON.stringify(data)},
+  data=>{data.sets[1].ramp.shadowDepth=101;return JSON.stringify(data)},
+  data=>{delete data.sets[1].ramp.lightHue;return JSON.stringify(data)}
+]){
+  sandbox.paletteText=mutate(JSON.parse(savedPalette));
+  assert.throws(()=>run('loadPalette(paletteText)'));
+  assert.equal(run('serializePalette()'),savedPalette);
+  assert.equal(run('JSON.stringify(stacks)'),savedColors);
+}
+console.log('PASS: palette JSON round trip, invalid files preserve state, canvas and history unchanged');
+
+(async()=>{
+  const input=get('paletteFile');
+  input.files=[{size:savedPalette.length,text:async()=>savedPalette}];
+  await input.onchange({target:input});
+  assert.equal(run('serializePalette()'),savedPalette);
+  assert.equal(input.value,'');assert.equal(get('loadPalette').disabled,false);
+  assert.match(get('paletteStatus').textContent,/セットを読み込みました/);
+  input.files=[{size:1,text:async()=>'{'}];
+  await input.onchange({target:input});
+  assert.match(get('paletteStatus').textContent,/読み込めませんでした/);
+  assert.equal(run('serializePalette()'),savedPalette);
+  input.files=[{size:1024*1024+1,text:async()=>{throw new Error('Must not read oversized file')}}];
+  await input.onchange({target:input});
+  assert.match(get('paletteStatus').textContent,/1MB以下/);
+  assert.equal(run('serializePalette()'),savedPalette);
+  console.log('PASS: file input loading, error messages, size limit and input reset');
+})().catch(error=>{console.error(error);process.exitCode=1});

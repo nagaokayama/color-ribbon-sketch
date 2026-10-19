@@ -113,6 +113,54 @@ for(const [key,label,min,max,value,unit] of rampFields){
   $(key).oninput=()=>{ramps[selected[0]][key]=+$(key).value;regenerate(selected[0]);ink=stacks[selected[0]][selected[1]];showColor(false);};
 }
 $('add').onclick=()=>{stacks.push([...stacks[selected[0]]]);ramps.push({...ramps[selected[0]]});baseColors.push(baseColors[selected[0]]);selectColor(stacks.length-1,2);};
+// Palette files contain editable sources, not canvas pixels.
+function serializePalette() {
+  return JSON.stringify({format:'iro-sketch-palette',version:1,sets:baseColors.map((base,i)=>({base,ramp:{...ramps[i]}}))},null,2);
+}
+function loadPalette(text) {
+  const data=JSON.parse(text);
+  if(!data || data.format!=='iro-sketch-palette' || data.version!==1 || !Array.isArray(data.sets) || data.sets.length<1 || data.sets.length>1000)
+    throw new Error('対応する色セットJSON（バージョン1、1〜1000セット）を選んでください。');
+  const parsed=data.sets.map(set=>{
+    if(!set || typeof set.base!=='string' || !/^#[0-9a-f]{6}$/i.test(set.base) || !set.ramp || typeof set.ramp!=='object')
+      throw new Error('ベース色または調整設定が不正です。');
+    const ramp={};
+    for(const [key,,min,max] of rampFields){
+      const value=set.ramp[key];
+      if(!Number.isInteger(value) || value<min || value>max) throw new Error('調整設定の値が範囲外です。');
+      ramp[key]=value;
+    }
+    return {base:set.base.toLowerCase(),ramp};
+  });
+  baseColors.splice(0,baseColors.length,...parsed.map(set=>set.base));
+  ramps.splice(0,ramps.length,...parsed.map(set=>set.ramp));
+  stacks.splice(0,stacks.length,...parsed.map(set=>Array(5).fill(set.base)));
+  stacks.forEach((_,i)=>regenerate(i));
+  selectColor(0,2);
+}
+$('savePalette').onclick=()=>{
+  const blob=new Blob([serializePalette()+'\n'],{type:'application/json'});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download='iro-sketch-colors.json';link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  $('paletteStatus').textContent='色セットの保存ファイルを作成しました。';
+};
+$('loadPalette').onclick=()=>$('paletteFile').click();
+let paletteLoadPending=false;
+$('paletteFile').onchange=async e=>{
+  const input=e.target,file=input.files[0];
+  if(!file || paletteLoadPending) return;
+  paletteLoadPending=true;$('loadPalette').disabled=true;
+  try {
+    if(file.size>1024*1024) throw new Error('1MB以下のJSONファイルを選んでください。');
+    loadPalette(await file.text());
+    $('paletteStatus').textContent=stacks.length+'セットを読み込みました。';
+  } catch(error) {
+    $('paletteStatus').textContent='読み込めませんでした。'+(error instanceof SyntaxError?'JSONの形式を確認してください。':error.message);
+  } finally {
+    input.value='';paletteLoadPending=false;$('loadPalette').disabled=false;
+  }
+};
 document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
 for (const name of ['pen','eraser']) $(name+'Size').oninput = e => {
   sizes[name]=+e.target.value; $(name+'SizeValue').textContent=sizes[name]+' px';
