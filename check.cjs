@@ -87,7 +87,7 @@ run("selectColor(0,2); editBase('#c08040')");
 run('ramps[0].shadowSat=70; ramps[0].highlightSat=70; regenerate(0)');
 assert.equal(run('stacks[0][2]'),'#c08040');
 assert.ok(run('Math.abs(hexToHsv(stacks[0][0])[1]-hexToHsv(baseColors[0])[1]*0.7)<1'));
-assert.ok(run('Math.abs(hexToHsv(stacks[0][4])[1]-hexToHsv(baseColors[0])[1]*0.7)<1'));
+assert.ok(run('Math.abs(hexToHsv(stacks[0][4])[1]-70)<1'));
 get('add').onclick();
 assert.equal(run('baseColors[3]'),run('baseColors[0]'));
 const duplicatedPalette=run('JSON.stringify(stacks[3])');
@@ -96,7 +96,7 @@ console.log('PASS: independent endpoint saturation, unchanged base and duplicate
 
 // Verify slider bounds and direction before saving the test palette.
 assert.equal(run("sliderValue('shadowSat',70)"),-30);
-assert.equal(run("rampValue('highlightSat',30)"),130);
+assert.equal(run("rampValue('highlightSat',30)"),30);
 assert.equal(run("sliderLabel('shadowSat',15,'%')"),'+15%');
 get('shadowDepth').value='0';get('shadowDepth').oninput();
 const darkShadow=run('hexToHsv(stacks[selected[0]][0])[2]');
@@ -121,6 +121,20 @@ get('lightHue').value='-30';get('lightHue').oninput();
 assert.equal(run('ramps[selected[0]].lightHue'),-30);
 assert.ok(run('ramps.every((r,i)=>i===selected[0] || r.lightHue===30)'));
 console.log('PASS: bulk field edits, saturation/depth conversion, independent bases and single-set mode');
+// Highlight saturation directly sets HSV S.
+get('highlightSat').value='0';get('highlightSat').oninput();
+assert.equal(run('hexToHsv(stacks[selected[0]][4])[1]'),0);
+get('highlightSat').value='100';get('highlightSat').oninput();
+assert.equal(run('hexToHsv(stacks[selected[0]][4])[1]'),100);
+// Old multiplier-based files migrate to absolute highlight saturation.
+const beforeMigration=run('serializePalette()');
+const legacy=JSON.parse(beforeMigration);legacy.version=1;
+legacy.sets.forEach(set=>set.ramp.highlightSat=70);
+sandbox.legacyText=JSON.stringify(legacy);
+run('loadPalette(legacyText)');
+assert.ok(run('ramps.every((r,i)=>r.highlightSat===Math.round(clamp(hexToHsv(baseColors[i])[1]*0.7)))'));
+sandbox.restoreText=beforeMigration;run('loadPalette(restoreText)');
+assert.equal(run('serializePalette()'),beforeMigration);
 // Round trips preserve all palette sources and generated colors, without touching ink history.
 const savedPalette=run('serializePalette()');
 const savedColors=run('JSON.stringify(stacks)');
@@ -136,7 +150,7 @@ assert.equal(pixels,pixelsBeforeLoad);
 assert.equal(run('JSON.stringify([undo,redo])'),historyBeforeLoad);
 for(const mutate of [
   ()=>'{',
-  data=>{data.version=2;return JSON.stringify(data)},
+  data=>{data.version=3;return JSON.stringify(data)},
   data=>{data.sets=[];return JSON.stringify(data)},
   data=>{data.sets[1].base='red';return JSON.stringify(data)},
   data=>{data.sets[1].ramp.shadowDepth=101;return JSON.stringify(data)},

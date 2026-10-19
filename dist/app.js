@@ -12,13 +12,13 @@ const stacks = [
 const rampFields = [
   ['lightHue','ハイライトの色相移動',-30,30,-15,'°'],
   ['highlight','ハイライトの明るさ',0,100,65,'%'],
-  ['highlightSat','ハイライトの彩度',70,130,70,'%'],
+  ['highlightSat','ハイライトの彩度',0,100,30,'%'],
   ['shadowHue','影の色相移動',-30,30,20,'°'],
   ['shadowDepth','影の暗さ',0,100,45,'%'],
   ['shadowSat','影の彩度',70,130,115,'%']
 ];
 // Stored multipliers and depth retain their JSON meaning.
-const isSaturation = key => key==='shadowSat' || key==='highlightSat';
+const isSaturation = key => key==='shadowSat';
 const sliderValue = (key,value) => isSaturation(key)?value-100:key==='shadowDepth'?100-value:value;
 const rampValue = (key,value) => isSaturation(key)?value+100:key==='shadowDepth'?100-value:value;
 const sliderLabel = (key,value,unit) => (isSaturation(key) && value>0?'+':'')+value+unit;
@@ -33,7 +33,8 @@ function regenerate(i) {
 
     const amount=Math.abs(position), shadow=position<0;
     const hue=h+(shadow?r.shadowHue:r.lightHue)*amount;
-    const saturation=s*(1+((shadow?r.shadowSat:r.highlightSat)/100-1)*amount);
+    const targetS=shadow?s*r.shadowSat/100:r.highlightSat;
+    const saturation=s+(targetS-s)*amount;
     return hsvToHex(hue,clamp(saturation),v+((shadow?shadowV:lightV)-v)*amount);
   });
 }
@@ -160,18 +161,22 @@ for(const [key,label,min,max,value,unit] of rampFields){
 $('add').onclick=()=>{stacks.push([...stacks[selected[0]]]);ramps.push({...ramps[selected[0]]});baseColors.push(baseColors[selected[0]]);selectColor(stacks.length-1,2);};
 // Palette files contain editable sources, not canvas pixels.
 function serializePalette() {
-  return JSON.stringify({format:'iro-sketch-palette',version:1,sets:baseColors.map((base,i)=>({base,ramp:{...ramps[i]}}))},null,2);
+  return JSON.stringify({format:'iro-sketch-palette',version:2,sets:baseColors.map((base,i)=>({base,ramp:{...ramps[i]}}))},null,2);
 }
 function loadPalette(text) {
   const data=JSON.parse(text);
-  if(!data || data.format!=='iro-sketch-palette' || data.version!==1 || !Array.isArray(data.sets) || data.sets.length<1 || data.sets.length>1000)
-    throw new Error('対応する色セットJSON（バージョン1、1〜1000セット）を選んでください。');
+  if(!data || data.format!=='iro-sketch-palette' || ![1,2].includes(data.version) || !Array.isArray(data.sets) || data.sets.length<1 || data.sets.length>1000)
+    throw new Error('対応する色セットJSON（バージョン1・2、1〜1000セット）を選んでください。');
   const parsed=data.sets.map(set=>{
     if(!set || typeof set.base!=='string' || !/^#[0-9a-f]{6}$/i.test(set.base) || !set.ramp || typeof set.ramp!=='object')
       throw new Error('ベース色または調整設定が不正です。');
     const ramp={};
     for(const [key,,min,max] of rampFields){
-      const value=set.ramp[key];
+            let value=set.ramp[key];
+      if(data.version===1 && key==='highlightSat'){
+        if(!Number.isInteger(value) || value<70 || value>130) throw new Error('調整設定の値が範囲外です。');
+        value=Math.round(clamp(hexToHsv(set.base)[1]*value/100));
+      }
       if(!Number.isInteger(value) || value<min || value>max) throw new Error('調整設定の値が範囲外です。');
       ramp[key]=value;
     }
