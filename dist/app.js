@@ -203,10 +203,19 @@ canvas.addEventListener('pointerup', e=>finish(e));
 canvas.addEventListener('pointercancel', e=>finish(e,true));
 canvas.addEventListener('lostpointercapture', e=>finish(e,true));
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
+function canvasFilename(now=new Date()) {
+  const animals=['cat','dog','fox','wolf','bear','panda','otter','rabbit','deer','tiger','lion','koala','owl','eagle','penguin','dolphin','whale','seal','horse','squirrel'];
+  const pad=value=>String(value).padStart(2,'0');
+  const date=String(now.getFullYear()).padStart(4,'0')+pad(now.getMonth()+1)+pad(now.getDate());
+  const time=pad(now.getHours())+pad(now.getMinutes());
+  const animal=animals[Math.floor(Math.random()*animals.length)];
+  return date+'-'+time+'-'+animal+'.png';
+}
 $('export').onclick = () => {
+  const filename=canvasFilename();
   const output=document.createElement('canvas'); output.width=output.height=1024;
   const c=output.getContext('2d'); c.fillStyle='#fff'; c.fillRect(0,0,1024,1024); c.drawImage(canvas,0,0);
-  output.toBlob(blob=>{ if(!blob) return; const url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url; a.download='iro-sketch.png'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); },'image/png');
+  output.toBlob(blob=>{ if(!blob) return; const url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url; a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); },'image/png');
 };
 document.addEventListener('keydown', e=>{
   if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.isComposing || active) return;
