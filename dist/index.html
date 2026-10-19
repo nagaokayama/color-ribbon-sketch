@@ -1,11 +1,18 @@
 <!doctype html>
 <html lang="ja">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>お絵かき</title><link rel="stylesheet" href="style.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ガマっとお絵かき</title><link rel="stylesheet" href="style.css"></head>
 <body>
+<header class="site-heading"><h1>color ribbon sketch</h1><p>好きなグラデーションカラーで絵を描ける</p></header>
 <main>
   <aside class="settings-panel" aria-label="描画設定">
     <label class="size">ペンのサイズ <output id="penSizeValue">16 px</output><input id="penSize" type="range" min="1" max="100" value="16"></label>
     <label class="size">消しゴムのサイズ <output id="eraserSizeValue">16 px</output><input id="eraserSize" type="range" min="1" max="100" value="16"></label>
+    <section class="shortcuts" aria-label="キーボードショートカット">
+      <h2>ショートカット</h2>
+      <dl><dt>B</dt><dd>ペン</dd><dt>E</dt><dd>消しゴム</dd><dt>I</dt><dd>スポイト</dd></dl>
+      <dl class="shortcut-history"><dt>Alt＋クリック</dt><dd>スポイト</dd><dt>Ctrl＋Z</dt><dd>元に戻す</dd><dt>Ctrl＋Shift＋Z<br>Ctrl＋Y</dt><dd>やり直す</dd></dl>
+      <p>Mac：Ctrlは⌘でも可</p>
+    </section>
   </aside>
   <section class="workspace">
     <nav aria-label="描画ツール">
@@ -23,6 +30,7 @@
   </section>
 
   <aside class="palette-panel" aria-label="カラー">
+
     <div class="palette-files"><div class="palette-actions"><button id="savePalette">セットを保存</button><button id="loadPalette" title="現在の全セットをJSONの内容で置き換えます">セットをロード</button></div><input id="paletteFile" type="file" accept=".json,application/json" hidden><p id="paletteStatus" role="status" aria-live="polite">ロードすると現在の全セットを置き換えます。</p></div>
     <section class="palette"><h2>カラーセット</h2><div id="stacks"></div><button id="add" class="add" title="カラーセットを追加" aria-label="セットを追加">＋</button></section>
     <section class="editor" aria-label="色調整"><h2>ベース</h2>
