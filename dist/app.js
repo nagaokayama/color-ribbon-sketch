@@ -10,13 +10,18 @@ const stacks = [
   ['#39405c', '#626e96', '#929fc5', '#bec9e2', '#e8eaf3']
 ];
 const rampFields = [
-  ['lightHue','ハイライトの色相移動',-180,180,-15,'°'],
+  ['lightHue','ハイライトの色相移動',-30,30,-15,'°'],
   ['highlight','ハイライトの明るさ',0,100,65,'%'],
-  ['highlightSat','ハイライトの彩度',0,200,65,'%'],
-  ['shadowHue','影の色相移動',-180,180,20,'°'],
+  ['highlightSat','ハイライトの彩度',70,130,70,'%'],
+  ['shadowHue','影の色相移動',-30,30,20,'°'],
   ['shadowDepth','影の暗さ',0,100,45,'%'],
-  ['shadowSat','影の彩度',0,200,115,'%']
+  ['shadowSat','影の彩度',70,130,115,'%']
 ];
+// Stored multipliers and depth retain their JSON meaning.
+const isSaturation = key => key==='shadowSat' || key==='highlightSat';
+const sliderValue = (key,value) => isSaturation(key)?value-100:key==='shadowDepth'?100-value:value;
+const rampValue = (key,value) => isSaturation(key)?value+100:key==='shadowDepth'?100-value:value;
+const sliderLabel = (key,value,unit) => (isSaturation(key) && value>0?'+':'')+value+unit;
 const newRamp = () => Object.fromEntries(rampFields.map(([key,,,,value])=>[key,value]));
 const ramps = stacks.map(newRamp);
 const baseColors = stacks.map(colors => colors[2]);
@@ -97,7 +102,7 @@ function showColor(syncSliders=true) {
   $('preview').style.background=ink;$('hex').textContent=ink.toUpperCase();$('color').value=base;
   $('role').textContent=roles[selected[1]];
   if(syncSliders){const [h,s,v]=hexToHsv(base);$('h').value=Math.round(h);$('s').value=Math.round(s);$('v').value=Math.round(v);}
-  for(const [key,,,,,unit] of rampFields){$(key).value=ramps[selected[0]][key];$(key+'Value').textContent=$(key).value+unit;}
+  for(const [key,,,,,unit] of rampFields){$(key).value=sliderValue(key,ramps[selected[0]][key]);$(key+'Value').textContent=sliderLabel(key,+$(key).value,unit);}
   updateSliders();renderStacks();
 }
 function selectColor(i,j){selected=[i,j];ink=stacks[i][j];showColor();}
@@ -108,9 +113,9 @@ for(const id of ['h','s','v'])$(id).oninput=()=>editBase(hsvToHex(+$('h').value,
 $('color').oninput=e=>editBase(e.target.value);
 for(const [key,label,min,max,value,unit] of rampFields){
   const wrapper=document.createElement('label');
-  wrapper.innerHTML=label+' <output id="'+key+'Value"></output><input id="'+key+'" type="range" min="'+min+'" max="'+max+'" value="'+value+'">';
+  wrapper.innerHTML=label+' <output id="'+key+'Value"></output><input id="'+key+'" type="range" min="'+Math.min(sliderValue(key,min),sliderValue(key,max))+'" max="'+Math.max(sliderValue(key,min),sliderValue(key,max))+'" value="'+sliderValue(key,value)+'">';
   $(key.startsWith('shadow') ? 'shadowControls' : 'highlightControls').append(wrapper);
-  $(key).oninput=()=>{ramps[selected[0]][key]=+$(key).value;regenerate(selected[0]);ink=stacks[selected[0]][selected[1]];showColor(false);};
+  $(key).oninput=()=>{ramps[selected[0]][key]=rampValue(key,+$(key).value);regenerate(selected[0]);ink=stacks[selected[0]][selected[1]];showColor(false);};
 }
 $('add').onclick=()=>{stacks.push([...stacks[selected[0]]]);ramps.push({...ramps[selected[0]]});baseColors.push(baseColors[selected[0]]);selectColor(stacks.length-1,2);};
 // Palette files contain editable sources, not canvas pixels.

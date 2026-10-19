@@ -60,16 +60,25 @@ console.log('PASS: scaled canvas coordinates and independent pen/eraser sizes');
 
 // Shadow and highlight saturation remain independent of the base color.
 run("selectColor(0,2); editBase('#c08040')");
-run('ramps[0].shadowSat=0; ramps[0].highlightSat=0; regenerate(0)');
+run('ramps[0].shadowSat=70; ramps[0].highlightSat=70; regenerate(0)');
 assert.equal(run('stacks[0][2]'),'#c08040');
-assert.equal(run('hexToHsv(stacks[0][0])[1]'),0);
-assert.equal(run('hexToHsv(stacks[0][4])[1]'),0);
+assert.ok(run('Math.abs(hexToHsv(stacks[0][0])[1]-hexToHsv(baseColors[0])[1]*0.7)<1'));
+assert.ok(run('Math.abs(hexToHsv(stacks[0][4])[1]-hexToHsv(baseColors[0])[1]*0.7)<1'));
 get('add').onclick();
 assert.equal(run('baseColors[3]'),run('baseColors[0]'));
 const duplicatedPalette=run('JSON.stringify(stacks[3])');
 run('regenerate(3)');assert.equal(run('JSON.stringify(stacks[3])'),duplicatedPalette);
 console.log('PASS: independent endpoint saturation, unchanged base and duplicated palette');
 
+// Verify slider bounds and direction before saving the test palette.
+assert.equal(run("sliderValue('shadowSat',70)"),-30);
+assert.equal(run("rampValue('highlightSat',30)"),130);
+assert.equal(run("sliderLabel('shadowSat',15,'%')"),'+15%');
+get('shadowDepth').value='0';get('shadowDepth').oninput();
+const darkShadow=run('hexToHsv(stacks[selected[0]][0])[2]');
+get('shadowDepth').value='100';get('shadowDepth').oninput();
+assert.ok(run('hexToHsv(stacks[selected[0]][0])[2]')>darkShadow);
+assert.equal(run('ramps[selected[0]].shadowDepth'),0);
 // Round trips preserve all palette sources and generated colors, without touching ink history.
 const savedPalette=run('serializePalette()');
 const savedColors=run('JSON.stringify(stacks)');
@@ -89,6 +98,8 @@ for(const mutate of [
   data=>{data.sets=[];return JSON.stringify(data)},
   data=>{data.sets[1].base='red';return JSON.stringify(data)},
   data=>{data.sets[1].ramp.shadowDepth=101;return JSON.stringify(data)},
+  data=>{data.sets[1].ramp.lightHue=31;return JSON.stringify(data)},
+  data=>{data.sets[1].ramp.shadowSat=69;return JSON.stringify(data)},
   data=>{delete data.sets[1].ramp.lightHue;return JSON.stringify(data)}
 ]){
   sandbox.paletteText=mutate(JSON.parse(savedPalette));
