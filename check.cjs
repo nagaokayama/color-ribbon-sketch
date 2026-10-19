@@ -58,19 +58,14 @@ run("setTool('pen')");c.handlers.pointerdown(event(70));assert.equal(run('active
 run("setTool('eraser')");c.handlers.pointerdown(event(71));assert.equal(run('active.size'),42);c.handlers.pointerup(event(71));
 console.log('PASS: scaled canvas coordinates and independent pen/eraser sizes');
 
-// Global saturation includes B and always regenerates from the source color.
+// Shadow and highlight saturation remain independent of the base color.
 run("selectColor(0,2); editBase('#c08040')");
-const sourceBase=run('baseColors[0]');
-run('ramps[0].saturation=50; regenerate(0)');
-assert.equal(run('stacks[0][2]'),run('hsvToHex(hexToHsv(baseColors[0])[0],hexToHsv(baseColors[0])[1]*0.5,hexToHsv(baseColors[0])[2])'));
-const halfPalette=run('JSON.stringify(stacks[0])');
-run('regenerate(0)');assert.equal(run('JSON.stringify(stacks[0])'),halfPalette);
-run('ramps[0].saturation=0; regenerate(0)');
-assert.ok(run('stacks[0].every(color=>hexToHsv(color)[1]===0)'));
-run('ramps[0].saturation=100; regenerate(0)');assert.equal(run('stacks[0][2]'),sourceBase);
-run("ramps[0].saturation=50; editBase('#804020')");assert.equal(run('ink'),run('stacks[0][2]'));assert.equal(run('baseColors[0]'),'#804020');
+run('ramps[0].shadowSat=0; ramps[0].highlightSat=0; regenerate(0)');
+assert.equal(run('stacks[0][2]'),'#c08040');
+assert.equal(run('hexToHsv(stacks[0][0])[1]'),0);
+assert.equal(run('hexToHsv(stacks[0][4])[1]'),0);
 get('add').onclick();
 assert.equal(run('baseColors[3]'),run('baseColors[0]'));
 const duplicatedPalette=run('JSON.stringify(stacks[3])');
 run('regenerate(3)');assert.equal(run('JSON.stringify(stacks[3])'),duplicatedPalette);
-console.log('PASS: global saturation includes B, repeat stability, zero saturation recovery, edited ink and duplicated palette');
+console.log('PASS: independent endpoint saturation, unchanged base and duplicated palette');

@@ -8,7 +8,7 @@ https://nagaokayama.github.io/color-ribbon-sketch/
 
 各色セットは5色固定です。左端を影（S）、中央をベース（B）、右端をハイライト（H）とし、中間の2色はそれぞれの中間色です。調整前のベース色はHSVとカラーピッカーで編集します。5色は、この色とセットごとのRamp設定から生成します。
 
-Shadow HueとLight HueはBからの色相差（度）です。Shadow DepthはBの明度から黒へ、HighlightはBの明度から白へ近づける割合です。SaturationはBを含む5色の彩度倍率で、Shadow SatとHighlight Satは端点での追加倍率です。中間色はBから各端点への変化量を半分にします。BにはSaturationだけを適用します。調整前のベース色は保持するため、Saturationを0%にしても元の値に戻せます。生成式は参照項目に基づく独自実装です。
+Shadow HueとLight HueはBからの色相差（度）です。Shadow DepthはBの明度から黒へ、HighlightはBの明度から白へ近づける割合です。Shadow SatとHighlight Satは、Bの彩度に対する各端点の倍率です。中間色はBから各端点への変化量を半分にします。Bは影・ハイライトの調整では変化しません。生成式は参照項目に基づく独自実装です。
 
 スポイトは描画色だけを取得し、色セットを書き換えません。色の変更は既存の線には適用しません。
 

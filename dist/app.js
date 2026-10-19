@@ -10,7 +10,6 @@ const stacks = [
   ['#39405c', '#626e96', '#929fc5', '#bec9e2', '#e8eaf3']
 ];
 const rampFields = [
-  ['saturation','全体の彩度',0,200,100,'%'],
   ['lightHue','ハイライトの色相移動',-180,180,-15,'°'],
   ['highlight','ハイライトの明るさ',0,100,65,'%'],
   ['highlightSat','ハイライトの彩度',0,200,65,'%'],
@@ -29,7 +28,7 @@ function regenerate(i) {
 
     const amount=Math.abs(position), shadow=position<0;
     const hue=h+(shadow?r.shadowHue:r.lightHue)*amount;
-    const saturation=s*r.saturation/100*(1+((shadow?r.shadowSat:r.highlightSat)/100-1)*amount);
+    const saturation=s*(1+((shadow?r.shadowSat:r.highlightSat)/100-1)*amount);
     return hsvToHex(hue,clamp(saturation),v+((shadow?shadowV:lightV)-v)*amount);
   });
 }
@@ -110,7 +109,7 @@ $('color').oninput=e=>editBase(e.target.value);
 for(const [key,label,min,max,value,unit] of rampFields){
   const wrapper=document.createElement('label');
   wrapper.innerHTML=label+' <output id="'+key+'Value"></output><input id="'+key+'" type="range" min="'+min+'" max="'+max+'" value="'+value+'">';
-  $(key.startsWith('shadow') ? 'shadowControls' : key==='saturation' ? 'ramp' : 'highlightControls').append(wrapper);
+  $(key.startsWith('shadow') ? 'shadowControls' : 'highlightControls').append(wrapper);
   $(key).oninput=()=>{ramps[selected[0]][key]=+$(key).value;regenerate(selected[0]);ink=stacks[selected[0]][selected[1]];showColor(false);};
 }
 $('add').onclick=()=>{stacks.push([...stacks[selected[0]]]);ramps.push({...ramps[selected[0]]});baseColors.push(baseColors[selected[0]]);selectColor(stacks.length-1,2);};
