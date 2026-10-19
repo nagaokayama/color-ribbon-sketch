@@ -42,6 +42,34 @@ let selected = [0, 2], tool = 'pen', ink = stacks[0][2];
 const sizes = { pen: 16, eraser: 16 };
 let active = null;
 const undo = [], redo = [];
+const viewport=$('viewport');
+const zoomSteps=[0.1,0.125,0.25,0.5,0.75,1,1.5,2,3,4];
+let zoom=1,fitZoom=true;
+function renderZoom() {
+  if(active!==null) return;
+  if(fitZoom) zoom=Math.max(1/1024,Math.min((viewport.clientWidth-32)/1024,(viewport.clientHeight-32)/1024));
+  canvas.style.width=(1024*zoom)+'px';
+  canvas.style.height=(1024*zoom)+'px';
+  $('zoomValue').textContent=(zoom*100).toFixed(1).replace(/\.0$/,'')+'%';
+  $('zoomOut').disabled=zoom<=zoomSteps[0];
+  $('zoomIn').disabled=zoom>=zoomSteps[zoomSteps.length-1];
+  if(fitZoom){viewport.scrollLeft=0;viewport.scrollTop=0;}
+}
+function changeZoom(direction) {
+  if(active!==null) return;
+  const next=direction>0?zoomSteps.find(step=>step>zoom+0.00001):[...zoomSteps].reverse().find(step=>step<zoom-0.00001);
+  if(next===undefined) return;
+  const centerX=(viewport.scrollLeft+viewport.clientWidth/2)/zoom;
+  const centerY=(viewport.scrollTop+viewport.clientHeight/2)/zoom;
+  fitZoom=false;zoom=next;renderZoom();
+  viewport.scrollLeft=centerX*zoom-viewport.clientWidth/2;
+  viewport.scrollTop=centerY*zoom-viewport.clientHeight/2;
+}
+$('zoomOut').onclick=()=>changeZoom(-1);
+$('zoomIn').onclick=()=>changeZoom(1);
+$('zoomFit').onclick=()=>{if(active!==null)return;fitZoom=true;renderZoom();};
+new ResizeObserver(()=>{if(fitZoom)renderZoom();}).observe(viewport);
+renderZoom();
 const snapshot = () => ctx.getImageData(0, 0, 1024, 1024);
 function historyButtons() {
   $('undo').disabled = !undo.length || active !== null;
@@ -208,7 +236,7 @@ function finish(e, cancel=false) {
   if (!active || active.id!==e.pointerId) return;
   if(cancel) ctx.putImageData(active.before,0,0);
   else {draw(point(e)); undo.push(active.before); if(undo.length>10) undo.shift(); redo.length=0;}
-  active=null; ctx.globalCompositeOperation='source-over'; historyButtons();
+  active=null; ctx.globalCompositeOperation='source-over'; historyButtons(); if(fitZoom)renderZoom();
   if(canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
 }
 canvas.addEventListener('pointerup', e=>finish(e));

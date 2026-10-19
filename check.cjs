@@ -13,12 +13,23 @@ const context={getImageData:()=>({value:pixels,data:[0,0,0,0]}),putImageData:d=>
 const elements=new Map();
 const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id)};
 Object.assign(get('canvas'),{getContext:()=>context,width:1024,height:1024,getBoundingClientRect:()=>({left:0,top:0,width:512,height:512}),setPointerCapture(){},hasPointerCapture:()=>false});
-const sandbox={document:{getElementById:get,querySelectorAll:()=>[],createElement:()=>new Element(),addEventListener(){}},setTimeout,URL,console};
+Object.assign(get('viewport'),{clientWidth:544,clientHeight:800,scrollLeft:0,scrollTop:0});
+const sandbox={ResizeObserver:class {observe(){}},document:{getElementById:get,querySelectorAll:()=>[],createElement:()=>new Element(),addEventListener(){}},setTimeout,URL,console};
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync('dist/app.js','utf8'),sandbox);
 function run(s){return vm.runInContext(s,sandbox)}
 function event(id){return {pointerId:id,button:0,clientX:20,clientY:20,preventDefault(){}}}
 const c=get('canvas');
+// Fit uses both dimensions; zoom changes only the display and keeps bitmap/history intact.
+assert.equal(run('zoom'),0.5);
+const zoomPixels=pixels;
+get('zoomIn').onclick();assert.equal(run('zoom'),0.75);
+get('zoomOut').onclick();assert.equal(run('zoom'),0.5);
+get('viewport').clientHeight=288;
+get('zoomFit').onclick();assert.equal(run('zoom'),0.25);
+assert.equal(get('canvas').style.width,'256px');
+assert.equal(get('canvas').width,1024);assert.equal(pixels,zoomPixels);
+get('viewport').clientHeight=800;get('zoomFit').onclick();
 for(let i=0;i<12;i++){c.handlers.pointerdown(event(i));c.handlers.pointerup(event(i))}
 assert.equal(run('undo.length'),10);
 const finished=pixels;

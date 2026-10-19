@@ -18,7 +18,8 @@
       </div>
       <div class="history"><button id="undo" title="元に戻す (Ctrl+Z)" aria-label="元に戻す"><svg viewBox="0 0 24 24"><path d="M8 4 3 9l5 5M3 9h11a7 7 0 0 1 0 14"/></svg></button><button id="redo" title="やり直す (Ctrl+Shift+Z)" aria-label="やり直す"><svg viewBox="0 0 24 24"><path d="m16 4 5 5-5 5M21 9H10a7 7 0 0 0 0 14"/></svg></button></div>
     </nav>
-    <div class="viewport"><canvas id="canvas" width="1024" height="1024" aria-label="お絵かきキャンバス"></canvas></div>
+    <div class="zoom-controls" role="group" aria-label="キャンバスの表示倍率"><button id="zoomOut" aria-label="縮小">−</button><output id="zoomValue" aria-live="polite"></output><button id="zoomIn" aria-label="拡大">＋</button><button id="zoomFit">画面に合わせる</button></div>
+    <div id="viewport" class="viewport"><canvas id="canvas" width="1024" height="1024" aria-label="お絵かきキャンバス"></canvas></div>
   </section>
 
   <aside class="palette-panel" aria-label="カラー">
