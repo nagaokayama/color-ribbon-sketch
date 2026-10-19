@@ -20,12 +20,13 @@ const rampFields = [
 ];
 const newRamp = () => Object.fromEntries(rampFields.map(([key,,,,value])=>[key,value]));
 const ramps = stacks.map(newRamp);
+const baseColors = stacks.map(colors => colors[2]);
 const clamp = x => Math.max(0,Math.min(100,x));
 function regenerate(i) {
-  const [h,s,v]=hexToHsv(stacks[i][2]), r=ramps[i];
+  const [h,s,v]=hexToHsv(baseColors[i]), r=ramps[i];
   const shadowV=v*(1-r.shadowDepth/100), lightV=v+(100-v)*r.highlight/100;
   stacks[i]=[-1,-0.5,0,0.5,1].map(position=>{
-    if(position===0)return stacks[i][2];
+
     const amount=Math.abs(position), shadow=position<0;
     const hue=h+(shadow?r.shadowHue:r.lightHue)*amount;
     const saturation=s*r.saturation/100*(1+((shadow?r.shadowSat:r.highlightSat)/100-1)*amount);
@@ -71,7 +72,7 @@ function renderStacks() {
     row.innerHTML = `<div class="stack-title"><span>SET ${String(i+1).padStart(2,'0')}</span><button class="remove" aria-label="色セット${i+1}を削除" ${stacks.length===1?'disabled':''}>×</button></div><div class="swatches"></div><div class="labels"><span>影</span><span>ベース</span><span>ハイライト</span></div>`;
     row.querySelector('.remove').onclick = () => {
       if (stacks.length===1) return;
-      stacks.splice(i,1); ramps.splice(i,1);
+      stacks.splice(i,1); ramps.splice(i,1); baseColors.splice(i,1);
       selected[0] = selected[0] === i ? Math.max(0,i-1) : selected[0] > i ? selected[0]-1 : selected[0];
       selectColor(...selected);
     };
@@ -93,7 +94,7 @@ function updateSliders() {
   $('s').style.background='linear-gradient(to right,'+hsvToHex(h,0,v)+','+hsvToHex(h,100,v)+')';
 }
 function showColor(syncSliders=true) {
-  const base=stacks[selected[0]][2];
+  const base=baseColors[selected[0]];
   $('preview').style.background=ink;$('hex').textContent=ink.toUpperCase();$('color').value=base;
   $('role').textContent=roles[selected[1]];
   if(syncSliders){const [h,s,v]=hexToHsv(base);$('h').value=Math.round(h);$('s').value=Math.round(s);$('v').value=Math.round(v);}
@@ -102,7 +103,7 @@ function showColor(syncSliders=true) {
 }
 function selectColor(i,j){selected=[i,j];ink=stacks[i][j];showColor();}
 function editBase(color,syncSliders=true){
-  stacks[selected[0]][2]=color;regenerate(selected[0]);selected[1]=2;ink=color;showColor(syncSliders);
+  baseColors[selected[0]]=color;regenerate(selected[0]);selected[1]=2;ink=stacks[selected[0]][2];showColor(syncSliders);
 }
 for(const id of ['h','s','v'])$(id).oninput=()=>editBase(hsvToHex(+$('h').value,+$('s').value,+$('v').value),false);
 $('color').oninput=e=>editBase(e.target.value);
@@ -112,7 +113,7 @@ for(const [key,label,min,max,value,unit] of rampFields){
   $(key.startsWith('shadow') ? 'shadowControls' : key==='saturation' ? 'ramp' : 'highlightControls').append(wrapper);
   $(key).oninput=()=>{ramps[selected[0]][key]=+$(key).value;regenerate(selected[0]);ink=stacks[selected[0]][selected[1]];showColor(false);};
 }
-$('add').onclick=()=>{stacks.push([...stacks[selected[0]]]);ramps.push({...ramps[selected[0]]});selectColor(stacks.length-1,2);};
+$('add').onclick=()=>{stacks.push([...stacks[selected[0]]]);ramps.push({...ramps[selected[0]]});baseColors.push(baseColors[selected[0]]);selectColor(stacks.length-1,2);};
 document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
 for (const name of ['pen','eraser']) $(name+'Size').oninput = e => {
   sizes[name]=+e.target.value; $(name+'SizeValue').textContent=sizes[name]+' px';
