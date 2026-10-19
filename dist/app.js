@@ -115,7 +115,14 @@ for(const [key,label,min,max,value,unit] of rampFields){
   const wrapper=document.createElement('label');
   wrapper.innerHTML=label+' <output id="'+key+'Value"></output><input id="'+key+'" type="range" min="'+Math.min(sliderValue(key,min),sliderValue(key,max))+'" max="'+Math.max(sliderValue(key,min),sliderValue(key,max))+'" value="'+sliderValue(key,value)+'">';
   $(key.startsWith('shadow') ? 'shadowControls' : 'highlightControls').append(wrapper);
-  $(key).oninput=()=>{ramps[selected[0]][key]=rampValue(key,+$(key).value);regenerate(selected[0]);ink=stacks[selected[0]][selected[1]];showColor(false);};
+  $(key).oninput=()=>{
+    const value=rampValue(key,+$(key).value);
+    ramps.forEach((ramp,i)=>{
+      if(!$('applyAllSets').checked && i!==selected[0]) return;
+      ramp[key]=value;regenerate(i);
+    });
+    ink=stacks[selected[0]][selected[1]];showColor(false);
+  };
 }
 $('add').onclick=()=>{stacks.push([...stacks[selected[0]]]);ramps.push({...ramps[selected[0]]});baseColors.push(baseColors[selected[0]]);selectColor(stacks.length-1,2);};
 // Palette files contain editable sources, not canvas pixels.

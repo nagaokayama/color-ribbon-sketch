@@ -23,12 +23,13 @@
 
   <aside class="palette-panel" aria-label="カラー">
     <div class="palette-files"><div class="palette-actions"><button id="savePalette">セットを保存</button><button id="loadPalette" title="現在の全セットをJSONの内容で置き換えます">セットをロード</button></div><input id="paletteFile" type="file" accept=".json,application/json" hidden><p id="paletteStatus" role="status" aria-live="polite">ロードすると現在の全セットを置き換えます。</p></div>
-    <section class="palette"><h2>色セット</h2><div id="stacks"></div><button id="add" class="add" title="色セットを追加" aria-label="色セットを追加">＋</button></section>
+    <section class="palette"><h2>カラーセット</h2><div id="stacks"></div><button id="add" class="add" title="カラーセットを追加" aria-label="セットを追加">＋</button></section>
     <section class="editor" aria-label="色調整"><h2>ベース</h2>
       <label>色相 <output id="hValue"></output><input id="h" type="range" min="0" max="359" step="1"></label>
       <label>明度（V） <output id="vValue"></output><input id="v" type="range" min="0" max="100" step="1"></label>
       <label>彩度 <output id="sValue"></output><input id="s" type="range" min="0" max="100" step="1"></label>
       <div class="current"><span id="preview"></span><div><small id="role"></small><strong id="hex"></strong></div><input id="color" type="color" aria-label="選択色を変更"></div>
+      <label class="apply-all"><input id="applyAllSets" type="checkbox">影・ハイライトの変更を全セットに適用</label>
       <section id="highlightControls" class="ramp-group"><h2>ハイライト</h2></section><section id="shadowControls" class="ramp-group"><h2>影</h2></section>
     </section>
   </aside>

@@ -79,6 +79,24 @@ const darkShadow=run('hexToHsv(stacks[selected[0]][0])[2]');
 get('shadowDepth').value='100';get('shadowDepth').oninput();
 assert.ok(run('hexToHsv(stacks[selected[0]][0])[2]')>darkShadow);
 assert.equal(run('ramps[selected[0]].shadowDepth'),0);
+// Bulk edits affect only the manipulated field; unchecked edits remain local.
+const basesBeforeBulk=run('JSON.stringify(baseColors)');
+const otherSettings=run('JSON.stringify(ramps.map(({lightHue,...rest})=>rest))');
+get('applyAllSets').checked=true;
+get('lightHue').value='30';get('lightHue').oninput();
+assert.ok(run('ramps.every(r=>r.lightHue===30)'));
+assert.equal(run('JSON.stringify(baseColors)'),basesBeforeBulk);
+assert.equal(run('JSON.stringify(ramps.map(({lightHue,...rest})=>rest))'),otherSettings);
+assert.equal(run('ink'),run('stacks[selected[0]][selected[1]]'));
+get('shadowSat').value='-30';get('shadowSat').oninput();
+assert.ok(run('ramps.every(r=>r.shadowSat===70)'));
+get('shadowDepth').value='25';get('shadowDepth').oninput();
+assert.ok(run('ramps.every(r=>r.shadowDepth===75)'));
+get('applyAllSets').checked=false;
+get('lightHue').value='-30';get('lightHue').oninput();
+assert.equal(run('ramps[selected[0]].lightHue'),-30);
+assert.ok(run('ramps.every((r,i)=>i===selected[0] || r.lightHue===30)'));
+console.log('PASS: bulk field edits, saturation/depth conversion, independent bases and single-set mode');
 // Round trips preserve all palette sources and generated colors, without touching ink history.
 const savedPalette=run('serializePalette()');
 const savedColors=run('JSON.stringify(stacks)');
