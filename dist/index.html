@@ -1,48 +1,24 @@
 <!doctype html>
 <html lang="ja">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ガマっとお絵かき</title><link rel="stylesheet" href="style.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LUT試作 · color ribbon sketch</title><link rel="stylesheet" href="lut.css"></head>
 <body>
-<header class="site-heading"><h1>color ribbon sketch</h1><p>好きなグラデーションカラーで絵を描ける</p></header>
 <main>
-  <aside class="settings-panel" aria-label="描画設定">
-    <label class="size">ペンのサイズ <output id="penSizeValue">16 px</output><input id="penSize" type="range" min="1" max="500" value="16"></label>
-    <label class="size">ペンの不透明度 <output id="penOpacityValue">100%</output><input id="penOpacity" type="range" min="0" max="100" value="100"></label>
-    <label class="size">消しゴムのサイズ <output id="eraserSizeValue">16 px</output><input id="eraserSize" type="range" min="1" max="500" value="16"></label>
-    <section class="shortcuts" aria-label="キーボードショートカット">
-      <h2>ショートカット</h2>
-      <dl><dt>B</dt><dd>ペン</dd><dt>E</dt><dd>消しゴム</dd><dt>I</dt><dd>スポイト</dd></dl>
-      <dl class="shortcut-history"><dt>Alt＋クリック</dt><dd>スポイト</dd><dt>Ctrl＋Z</dt><dd>元に戻す</dd><dt>Ctrl＋Shift＋Z<br>Ctrl＋Y</dt><dd>やり直す</dd></dl>
-      <p>Mac：Ctrlは⌘でも可</p>
-    </section>
-  </aside>
-  <section class="workspace">
-    <nav aria-label="描画ツール">
-      <div class="tools">
-        <button data-tool="pen" title="ペン (B)" aria-label="ペン"><svg viewBox="0 0 24 24"><path d="m14 4 6 6M4 20l5-1L21 7a2 2 0 0 0-4-4L5 15Z"/></svg></button>
-        <button data-tool="eraser" title="消しゴム (E)" aria-label="消しゴム"><svg viewBox="0 0 24 24"><path d="m4 13 10-10 8 8-10 10H8l-4-4Z M9 8l8 8M12 21h10"/></svg></button>
-        <button data-tool="picker" title="スポイト (I)" aria-label="スポイト"><svg viewBox="0 0 24 24"><path d="m14 4 6 6M16 6l3-3a2 2 0 0 1 3 3l-3 3M15 7 5 17l-1 4 4-1L18 10"/></svg></button>
-        <span class="separator"></span>
-        <button id="export" title="PNGを書き出す" aria-label="PNGを書き出す"><svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></button>
-      </div>
-      <div class="history"><button id="undo" title="元に戻す (Ctrl+Z)" aria-label="元に戻す"><svg viewBox="0 0 24 24"><path d="M8 4 3 9l5 5M3 9h11a7 7 0 0 1 0 14"/></svg></button><button id="redo" title="やり直す (Ctrl+Shift+Z)" aria-label="やり直す"><svg viewBox="0 0 24 24"><path d="m16 4 5 5-5 5M21 9H10a7 7 0 0 0 0 14"/></svg></button></div>
-    </nav>
-    <div class="zoom-controls" role="group" aria-label="キャンバスの表示倍率"><button id="zoomOut" aria-label="縮小">−</button><output id="zoomValue" aria-live="polite"></output><button id="zoomIn" aria-label="拡大">＋</button><button id="zoomFit">画面に合わせる</button></div>
-    <div id="viewport" class="viewport"><canvas id="canvas" width="1024" height="1024" aria-label="お絵かきキャンバス"></canvas></div>
-  </section>
-
-  <aside class="palette-panel" aria-label="カラー">
-
-    <div class="palette-files"><div class="palette-actions"><button id="savePalette">セットを保存</button><button id="loadPalette" title="現在の全セットをJSONの内容で置き換えます">セットをロード</button></div><input id="paletteFile" type="file" accept=".json,application/json" hidden><p id="paletteStatus" role="status" aria-live="polite">ロードすると現在の全セットを置き換えます。</p></div>
-    <section class="palette"><h2>カラーセット</h2><div id="stacks"></div><button id="add" class="add" title="カラーセットを追加" aria-label="セットを追加">＋</button></section>
-    <section class="editor" aria-label="色調整"><h2>ベース</h2>
-      <label>色相 <output id="hValue"></output><input id="h" type="range" min="0" max="359" step="1"></label>
-      <label>明度（V） <output id="vValue"></output><input id="v" type="range" min="0" max="100" step="1"></label>
-      <label>彩度 <output id="sValue"></output><input id="s" type="range" min="0" max="100" step="1"></label>
-      <div class="current"><span id="preview"></span><div><small id="role"></small><strong id="hex"></strong></div><input id="color" type="color" aria-label="選択色を変更"></div>
-      <label class="apply-all"><input id="applyAllSets" type="checkbox">影・ハイライトの変更を全セットに適用</label>
-      <section id="highlightControls" class="ramp-group"><h2>ハイライト</h2></section><section id="shadowControls" class="ramp-group"><h2>影</h2></section>
-    </section>
-  </aside>
-</main>
-<script src="app.js"></script>
+<section class="drawing" aria-label="描画エリア">
+<div class="toolbar"><div role="group" aria-label="ツール"><a class="icon-button" href="https://nagaokayama.github.io/color-ribbon-sketch-app/" title="既存版へ" aria-label="既存版へ" data-icon="back"><span>既存版へ</span></a><button data-tool="pen" data-icon="pen" title="ペン (B)" aria-label="ペン" aria-pressed="true"><span>ペン</span></button><button data-tool="eraser" data-icon="eraser" title="消しゴム (E)" aria-label="消しゴム" aria-pressed="false"><span>消しゴム</span></button><button data-tool="picker" data-icon="picker" title="スポイト (I)" aria-label="スポイト" aria-pressed="false"><span>スポイト</span></button></div><div><button id="undo" data-icon="undo" title="元に戻す" aria-label="元に戻す"><span>元に戻す</span></button><button id="redo" data-icon="redo" title="やり直す" aria-label="やり直す"><span>やり直す</span></button><button id="export" data-icon="export" title="PNG保存" aria-label="PNG保存"><span>PNG保存</span></button></div></div>
+<div class="debug-controls" role="group" aria-label="デバッグ表示">
+<button data-view="normal" aria-pressed="true" data-icon="pen">通常</button>
+<button data-view="palette" aria-pressed="false" data-icon="palette">パレット番号</button>
+<button data-view="position" aria-pressed="false" data-icon="ramp">ランプ位置</button>
+</div>
+<div id="debug-info" hidden><div id="debug-legend"></div><output id="pixel-info" aria-live="off">—</output></div>
+<div class="canvas-metrics"><output id="timing" aria-live="off" title="直近のRGBA変換とCanvasへの転送にかかった時間。入力遅延やFPSではありません。">LUT変換＋転送 — ms</output></div>
+<div class="paper"><canvas id="canvas" aria-label="お絵かきキャンバス"></canvas></div>
+</section>
+<aside>
+<section aria-label="ブラシ設定"><h2><span data-icon="pen" aria-hidden="true"></span>ブラシ設定</h2><label title="サイズ"><span class="setting-name"><span data-icon="size" aria-hidden="true"></span>サイズ</span><input id="size" aria-label="サイズ" type="range" min="1" max="32" value="5"></label><label title="不透明度"><span class="setting-name"><span data-icon="opacity" aria-hidden="true"></span>不透明度</span><input id="opacity" aria-label="不透明度" type="range" min="0" max="100" value="100"></label><label title="筆圧でサイズを変える"><span class="setting-name"><span data-icon="pressure" aria-hidden="true"></span>筆圧でサイズを変える</span><input id="pressure" aria-label="筆圧でサイズを変える" type="checkbox" checked></label></section>
+<section aria-label="パレット"><h2>パレット</h2><div id="palettes"></div><button id="addPalette" data-icon="palette" title="パレット追加" aria-label="パレット追加"><span>パレット追加</span></button></section>
+<section aria-label="描画色"><h2>描画色</h2><label title="ランプ位置"><span class="setting-name"><span data-icon="ramp" aria-hidden="true"></span>ランプ位置</span><input id="position" aria-label="ランプ位置" type="range" min="0" max="255" value="128"></label><div id="ramp"></div></section>
+<section aria-label="選択パレットの編集"><h2>パレット編集</h2><div id="colors"></div><div class="actions"><button id="addColor" data-icon="plus" title="色を追加" aria-label="色を追加"><span>色を追加</span></button><button id="removeColor" data-icon="minus" title="末尾の色を削除" aria-label="末尾の色を削除"><span>末尾の色を削除</span></button></div></section>
+</aside>
+</main><script src="lut-core.js"></script><script src="lut.js"></script>
 </body></html>
